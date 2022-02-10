@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2673fa33-e3fb-4c8c-a7a7-1bd32ea91242" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="915ebebb-d477-47ae-af7a-2716c9a75227" >
+		<http:request-connection protocol="HTTPS" host="reqres.in/" />
+	</http:request-config>
+	<flow name="sampleFlow" doc:id="bc95bf2f-d214-49ed-bfb1-439687d929ba" >
+		<http:listener doc:name="Listener" doc:id="55c955e7-2d94-4770-8e2b-6f2eedb8e913" config-ref="HTTP_Listener_config" path="/sample"/>
+		<ee:transform doc:name="Transform Message" doc:id="857053d7-a064-4f0a-a2f7-5d728944a3ea" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="userId" ><![CDATA[%dw 2.0
+output application/java
+---
+{"ids":[1,2,3,4,5,6,7]}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="4d905b2a-b2d1-4148-9761-7bc6c41da4e2" collection="#[vars.userId.ids]">
+			<http:request method="GET" doc:name="Request" doc:id="540e9aca-f7f9-49f9-a6ae-b7e8dc2528f7" config-ref="HTTP_Request_configuration" url="https://reqres.in/api/users/{id}">
+				<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"id" : payload
+}]]]></http:uri-params>
+			</http:request>
+			<logger level="INFO" doc:name="Logger" doc:id="1dab9589-967f-4f62-9d8e-60624d8d854c" message="In for Each::: #[payload]"/>
+		</foreach>
+		<logger level="INFO" doc:name="Logger" doc:id="8c9affd4-acc2-447c-89d5-78e865c6d601" message="Outside For Each ::: #[payload]"/>
+	</flow>
+</mule>
